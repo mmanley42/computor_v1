@@ -3,7 +3,8 @@ import re
 ERROR_STRING_SET = {
 	"SpaceError":	"There should not be a space here: ",
 	"WrongChar":	"Wrong character found.\nOnly these charaters are acceptable[xX\^+\-\*0-9. =]",
-	"MultiplingX":	"Multipling x values is not supported at this moment."
+	"MultiplingX":	"Multipling x values is not supported at this moment.",
+	"NoOperators":	"There shoud be an operator between these values."
 }
 
 def highlight_error(original, match_set):
@@ -25,9 +26,10 @@ class EquationPrep:
 
 	def _change_signs(self, items_to_change):
 		for index, elem in enumerate(items_to_change):
-			go = re.sub('\A', '-', elem)
-			go = re.sub('--', '', go)
-			items_to_change[index] = go
+			if elem:
+				go = re.sub('\A', '-', elem)
+				go = re.sub('--', '', go)
+				items_to_change[index] = go
 		return items_to_change
 
 	def change_multipliers_side(self, data):
@@ -43,8 +45,21 @@ class EquationPrep:
 	def situational_parsing(self, data):
 		chack = re.search("-?\d*x\d+ \* \d+.?\d*", data)
 		print('Situational parsing: ', chack)
-		if chack is not None:
-			return self.change_multipliers_side(self, data)
+		# if chack is not None:
+		# 	return self.change_multipliers_side(self, data)
+		d_check = data
+		while re.search("-?\d*x\d+ \* \d+.?\d*", d_check) is not None:
+			d_check = self.change_multipliers_side(self, d_check)
+			print(chack.group(), data)
+			d_chck = re.sub(chack.group(), "", data)
+			print(d_chck)
+		"""
+		d_check = data
+		while re.search("-?\d*x\d+ \* \d+.?\d*", d_check) is not None:
+			d_chack = self.change_multipliers_side(self, data)
+
+		"""
+		data = d_check
 		return data
 
 	def _possible_error_cases(self, data_to_check):
@@ -57,14 +72,36 @@ class EquationPrep:
 		if char_check is not None:
 			print(self.error_message["WrongChar"], 'found : ', char_check.group())
 			return None
+		error = re.search("x[^\^] *[\d]", data_to_check)
+		if error is not None:
+			print(self.error_message["NoOperators"], 'found : ', error.group())
+			return None
 		return data_to_check
+
+	def _parsing_x_situations(self, data):
+		reg_multipling_xs = "(?<=x\^[0-9]) *\* *(\d+x)"
+		reg_power_char = "x *\^ *"
+		req_solo_x = "x[^\^0-9] *(?=[\*+-/] \d)"
+
+		solo_x = re.sub(req_solo_x, "x1 ", data)
+		print(solo_x)
+		multiply_change = solo_x
+		for _ in re.finditer(reg_multipling_xs, solo_x):
+			multiply_change = re.sub(reg_multipling_xs, " ** \g<1>", solo_x)
+			print(multiply_change)
+		simpli = re.sub(reg_power_char, 'x', multiply_change)
+		print(simpli)
+		return simpli
 
 	def basic_pre_parsing(self, data, right=True):
 		lower_case_eq = data.lower()
 		minus_change = re.sub(' *- *', ' + -', lower_case_eq)
 		multiply_change = re.sub(' *\* *', ' * ', minus_change)
-		x_multi = re.sub("(?<=x\^[0-9]) *\* *(\d+x)", " ** \g<1>", multiply_change)
-		simpli = re.sub('x *\^ *', 'x', x_multi)
+		simpli = self._parsing_x_situations(multiply_change)
+		# for elem in re.finditer("(?<=x\^[0-9]) *\* *(\d+x)", multiply_change):
+		# 	multiply_change = re.sub("(?<=x\^[0-9]) *\* *(\d*x)", " ** \g<1>", multiply_change)
+		# print(multiply_change)
+		# simpli = re.sub('x *\^ *', 'x', multiply_change)
 		if self._possible_error_cases(simpli) is None:
 			return None
 		groups = simpli.split('+')
@@ -73,7 +110,7 @@ class EquationPrep:
 			trim_groups = self._change_signs(trim_groups)
 		return trim_groups
 
-class EquationParser:
+class EquationPars:
 	__slots__ = ["equ_data", "power", "pow_data", "zero_pow_data"]
 	def __init__(self):
 		self.equ_data = []
@@ -116,8 +153,8 @@ class EquationParser:
 
 	def zero_powered_data(self, data):
 		c = eval(data)
-		number = float(c)
-		self.put_number_in_correct_tuple(number, 0)
+		# number = eval(c)
+		self.put_number_in_correct_tuple(c, 0)
 
 	def powered_data(self, data):
 		self.pow_data.append(data)
@@ -141,3 +178,4 @@ class EquationParser:
 				self.powered_data(item)
 			else:
 				self.zero_powered_data(item)
+		return self.equ_data
