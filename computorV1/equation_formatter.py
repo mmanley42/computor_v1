@@ -69,35 +69,39 @@ class EquationFormatting:
 	def _x_formatting(self, data):
 		"""Formats for x parts"""
 		reg_power_char = "x *\^ *"
-		req_solo_x = "x[^\^0-9] *(?=[\*+-/] \d)" # not working properly if solo x end of string
+		reg_solo_x = "x(?= ?[\*\+-]|$| ?=)"
 
-		solo_x = re.sub(req_solo_x, "x^1 ", data)
+		print("Post solo: ", data)
+		solo_x = re.sub(reg_solo_x, "x^1", data)
+		print("Solo x: ", solo_x)
 		x_multiply_change = self.format_multipling_xs(solo_x)
+		print(x_multiply_change)
 		remove_power_char = re.sub(reg_power_char, 'x', x_multiply_change)
 		return remove_power_char
 
 	def _operator_formatting(self, equation):
 		"""The basic operators formatting"""
-		lower_cased = equation.lower()
-		print("Lower: ", lower_cased)
+		trimed = equation.strip()
+		lower_cased = trimed.lower()
+
 		space_cut = re.sub(" +", " ", lower_cased)
-		print(space_cut)
-		plus_space = re.sub(" *\+ *", " + ", space_cut)
+		equal_space = re.sub(" *= *", "=", space_cut)
+		plus_space = re.sub(" *\+ *", " + ", equal_space)
 		minus_space = re.sub(" *-", " -", plus_space)
+		multiply_space = re.sub(' *\* *', ' * ', minus_space)
 
-		minus_format = re.sub('(?<!\*) +- *', ' + -', minus_space)
-		print("minus 1 : ", minus_format)
-		if re.match(" \+ -", minus_format):
-			minus_format = re.sub("\A \+ -", "-", minus_format)
-		print("minus: ", minus_format)
+		minus_format = re.sub('(?<!\*) +- *', ' + -', multiply_space)
+		first_minus = minus_format
+		if re.match(" \+ -", first_minus):
+			minus_format = re.sub("\A \+ -", "-", first_minus)
 
-		multiply_format = re.sub(' *\* *', ' * ', minus_format)
-		power_char = re.sub("x *\^ *", "x^", multiply_format)
-		add_power_char = re.sub("x *(\d+)", "x^\g<1>", power_char)
+		power_char_space = re.sub("x *\^ *", "x^", minus_format)
+		add_power_char = re.sub("x *(\d+)", "x^\g<1>", power_char_space)
+
 		return add_power_char
 
 	def basic_input_check(self, data_to_check):
-		operator_check = re.findall("(\d+ \d+)|(x\d+ ?x\d)", data_to_check)
+		operator_check = re.findall("(\d+ +\d+)|(x\d+ *x\d)", data_to_check)
 		if operator_check:
 			# highlight_error(data_to_check, operator_check)
 			print(self.error_message["SpaceError"], *operator_check)
@@ -113,7 +117,7 @@ class EquationFormatting:
 		#  Multiple multipliers check
 		return data_to_check
 
-	def final_check(self, equ_list):
+	def check_for_multipling_multipliers(self, equ_list):
 		if not equ_list:
 			return False
 		for item in equ_list:
@@ -145,14 +149,16 @@ class EquationFormatting:
 			0	:	Is an equation
 			1	:	Is a valid equation side, assumes a '= 0' at the end if No '=' provided
 		"""
-		char_check = re.search("[^xX\^+\-\*0-9. =]+", equation)
-		if char_check is not None:
-			print(self.error_message["WrongChar"], 'found : ', char_check.group())
+		char_check = self.basic_input_check(equation)
+		if char_check is None:
 			return -1
 		if re.search("=", equation) is None:
 			return 1
 		else:
 			return 0
+
+	def format_inputed_equation(self, equation):
+		pass
 
 	def _add_equation_format(self, equation):
 		""" If is_equation_format == 1 will add the = 0 at the end and goes on formatting.

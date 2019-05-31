@@ -4,10 +4,18 @@ EF = equation_formatter.EquationFormatting
 
 
 start_format_management = {
-	"Weirdly_shaped_equation_1": ["    -  1+ 2 *x^1 - 4.3*         -x = 3.3x^2",		"-1 + 2 * x^1 + -4.3 * -x^1 = 3.3 * x^2"],
-	"Weirdly_shaped_equation_2": ["1+ 2 *-3x   ^    1+ 4.3*         -x = x^2 * 3.3",	"1 + 2 * -3x^1 + 4.3 * -x^1 = 3.3 * x^2"],
-	"Weirdly_shaped_equation_3": ["1+ 2 * -3x    1+ 4.3*         -x = x^2 * 3.3",		"1 + 2 * -3x^1 + 4.3 * -x^1 = 3.3 * x^2"],
-	"Weirdly_shaped_equation_4": [" 1+ 2 *-3x^    1+ 4.3 *  -x = x^2 * 3.3   ",			"1 + 2 * -3x^1 + 4.3 * -x^1 = 3.3 * x^2"],
+	# Valid weirdly shaped equations
+	"Weirdly_shaped_equation_1": ["    -  1+ 2 *x^1 - 4.3*         -x = 3.3x^2",		"-1 + 2 * x1 + -4.3 * -x1=3.3x2"],
+	"Weirdly_shaped_equation_2": ["1+ 2 *-3x   ^    1+ 4.3*         -x = x^2 * 3.3",	"1 + 2 * -3x1 + 4.3 * -x1=x2 * 3.3"],
+	"Weirdly_shaped_equation_3": ["1+ 2 * -3x    1+ 4.3*         -x = x^2 * 3.3",		"1 + 2 * -3x1 + 4.3 * -x1=x2 * 3.3"],
+	"Weirdly_shaped_equation_4": [" 1+ 2 *-3x^    1+ 4.3 *  -x = x^2 * 3.3   ",			"1 + 2 * -3x1 + 4.3 * -x1=x2 * 3.3"],
+	"Weirdly_shaped_equation_5": ["-1+2*-3x^1+4.3*-x-5x2*2x1=x^2*3.3",					"-1 + 2 * -3x1 + 4.3 * -x1 + -5x2 ** 2x1=x2 * 3.3"],
+	"Weirdly_shaped_equation_6": [" 1 + 2 * -3x^1 + 4.3 * -x -5x2 * x = x^2 * 3.3",	"1 + 2 * -3x1 + 4.3 * -x1 + -5x2 ** x1=x2 * 3.3"],
+
+	# A plus sign after a multiplication
+	"Wrongly_shaped_1": ["-1 +2*- 3x^1  +4.3*+ x  +5x2*x^1=x^ * -3.3"],
+	# Wrong characters
+	"Wrongly_shaped_2": ["-1ABC +t2*-() 3x^1 // +4.3*+ x  +5x%^2*x^1=x^2 * -3.3"],
 }
 
 multiplier_management = {
@@ -125,6 +133,41 @@ def test_start_format_management_4():
 	print(result)
 	assert result == end_str, "\nWRONG ANSWER: \"{0}\" != \"{1}\"".format(result, end_str)
 
+def test_start_format_management_5():
+	equ_f = EF()
+	start_str = start_format_management["Weirdly_shaped_equation_5"][0]
+	end_str = start_format_management["Weirdly_shaped_equation_5"][1]
+
+	result = equ_f._operator_formatting(start_str)
+	result = equ_f._x_formatting(result)
+	print(result)
+	assert result == end_str, "\nWRONG ANSWER: \"{0}\" != \"{1}\"".format(result, end_str)
+
+def test_start_format_management_6():
+	equ_f = EF()
+	start_str = start_format_management["Weirdly_shaped_equation_6"][0]
+	end_str = start_format_management["Weirdly_shaped_equation_6"][1]
+
+	result = equ_f._operator_formatting(start_str)
+	result = equ_f._x_formatting(result)
+	print(result)
+	assert result == end_str, "\nWRONG ANSWER: \"{0}\" != \"{1}\"".format(result, end_str)
+
+def test_start_format_management_invalid_1():
+	equ_f = EF()
+	start_str = start_format_management["Wrongly_shaped_1"][0]
+
+	result = equ_f.is_equation_format(start_str)
+	print(result)
+	assert result == -1, "\nWRONG ANSWER: Result should be == -1 not {0}".format(result)
+
+def test_start_format_management_invalid_2():
+	equ_f = EF()
+	start_str = start_format_management["Wrongly_shaped_2"][0]
+
+	result = equ_f.is_equation_format(start_str)
+	print(result)
+	assert result == -1, "\nWRONG ANSWER: Result should be == -1 not {0}".format(result)
 
 #
 # def test_base_equs_no_equal_01():
