@@ -11,10 +11,8 @@ class EquationFormatting:
 	"""Class that will parse a second degree formated string.
 	It will only accept two strings per instances as for the two sides of an equation.
 	"""
-	__slots__ = ["_strict", "_right_side", "error_message"]
-	def __init__(self, strict, equ_side):
-		self._strict = strict
-		self._right_side = equ_side
+	__slots__ = ["error_message"]
+	def __init__(self):
 		self.error_message = ERROR_STRING_SET
 
 
@@ -71,7 +69,7 @@ class EquationFormatting:
 	def _x_formatting(self, data):
 		"""Formats for x parts"""
 		reg_power_char = "x *\^ *"
-		req_solo_x = "x[^\^0-9] *(?=[\*+-/] \d)"
+		req_solo_x = "x[^\^0-9] *(?=[\*+-/] \d)" # not working properly if solo x end of string
 
 		solo_x = re.sub(req_solo_x, "x^1 ", data)
 		x_multiply_change = self.format_multipling_xs(solo_x)
@@ -80,7 +78,19 @@ class EquationFormatting:
 
 	def _operator_formatting(self, equation):
 		"""The basic operators formatting"""
-		minus_format = re.sub(' *- *', ' + -', equation)
+		lower_cased = equation.lower()
+		print("Lower: ", lower_cased)
+		space_cut = re.sub(" +", " ", lower_cased)
+		print(space_cut)
+		plus_space = re.sub(" *\+ *", " + ", space_cut)
+		minus_space = re.sub(" *-", " -", plus_space)
+
+		minus_format = re.sub('(?<!\*) +- *', ' + -', minus_space)
+		print("minus 1 : ", minus_format)
+		if re.match(" \+ -", minus_format):
+			minus_format = re.sub("\A \+ -", "-", minus_format)
+		print("minus: ", minus_format)
+
 		multiply_format = re.sub(' *\* *', ' * ', minus_format)
 		power_char = re.sub("x *\^ *", "x^", multiply_format)
 		add_power_char = re.sub("x *(\d+)", "x^\g<1>", power_char)
@@ -152,7 +162,7 @@ class EquationFormatting:
 		is_equ = self.is_equation_format(equation)
 		if is_equ != -1:
 			if is_equ == 1:
-				equation = "".join(equation, " = 0")
+				equation = "".join([equation, " = 0"])
 			spaced_parsed_equ_list = " ".join(equation.split()).split('=')
 			print("_add_equation_format : ", spaced_parsed_equ_list)
 			return spaced_parsed_equ_list
@@ -173,8 +183,7 @@ class EquationFormatting:
 		if equation is None:
 			return None
 		for index, equ_side in enumerate(equation):
-			lower_cased = equ_side.lower()
-			op_change = self._operator_formatting(lower_cased)
+			op_change = self._operator_formatting(equ_side)
 			print("Basic parse", op_change)
 			x_formated = self._x_formatting(op_change)
 			print("X formatting", x_formated)
